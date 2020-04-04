@@ -6,6 +6,7 @@ package com.example.demo.covid.util;
 import java.util.Properties;
 
 import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -49,13 +50,28 @@ public class EmailUtil {
 		logger.info("--------------- sendEmailToCustomer --------------");
 		try {
 			Properties mailProps = new Properties();
-			mailProps.put("mail.smtp.host", apiUtil.getProperty("spring.mail.host"));
-			Session mailSession = Session.getDefaultInstance(mailProps, null);
+			final String username = "incubationtracker@gmail.com";
+	        final String password = "bvhibkzgkicfdsqh";
+
+	        Properties props = new Properties();
+	        props.put("mail.smtp.starttls.enable","true");
+	        props.put("mail.smtp.host", "smtp.gmail.com");    
+	          props.put("mail.smtp.auth", "true");    
+	          props.put("mail.smtp.port", "587");  ; //TLS
+	        
+	          Session session = Session.getDefaultInstance(props,    
+	                  new javax.mail.Authenticator() {    
+	                  protected PasswordAuthentication getPasswordAuthentication() {    
+	                  return new PasswordAuthentication(username,password);  
+	                  }    
+	                 });    
+			//mailProps.put("mail.smtp.host", apiUtil.getProperty("spring.mail.host"));
+			//Session mailSession = Session.getDefaultInstance(mailProps, null);
 			InternetAddress toAddrs = new InternetAddress(apiUtil.getProperty("email.to.address"));
 			
 			InternetAddress fromAddr = new InternetAddress(apiUtil.getProperty("email.from.address").toString().trim());
 			// Create and initialize message
-			javax.mail.Message message = new MimeMessage(mailSession);
+			javax.mail.Message message = new MimeMessage(session);
 			message.setFrom(fromAddr);
 			message.setRecipient(javax.mail.Message.RecipientType.TO, toAddrs);
 			// message.setRecipients(Message.RecipientType.CC, ccAddrs);
