@@ -1,10 +1,7 @@
 package com.example.demo.covid.controllers;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -22,63 +19,49 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.covid.dtos.Candidate;
 import com.example.demo.covid.dtos.CovidLocation;
-import com.example.demo.covid.dtos.Location;
-import com.example.demo.covid.dtos.SuspectionReport;
-import com.example.demo.covid.dtos.User;
+import com.example.demo.covid.dtos.SuspectionDto;
+import com.example.demo.covid.exception.FileParseException;
 import com.example.demo.covid.repositiories.CandidateRepository;
 import com.example.demo.covid.services.CandidateService;
 
 @RestController
-@RequestMapping("/api/v1/icTracker")
+@RequestMapping("/api/v1/ic-tracker")
 public class CandidateController {
 
-    @Autowired
-    private CandidateRepository candidateRepository;
-    
-    @Autowired
-    private CandidateService candidateService;
+	@Autowired
+	private CandidateRepository candidateRepository;
 
-    @PostMapping
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public Candidate add(@RequestBody Candidate candidate) {
-        return candidateRepository.save(candidate);
-    }
-    
-	
-	/*
-	 * @GetMapping(value = "/user", produces = { "application/json" }) public User
-	 * getUser() {
-	 * 
-	 * }
-	 * 
-	 * @PostMapping(value = "/user", produces = { "application/json" }) public User
-	 * createUser() {
-	 * 
-	 * }
-	 */
-	  
-	  @GetMapping(value = "/infectedAreas", produces = { "application/json" })
-	  public ResponseEntity<List<CovidLocation>> getInfectedAreas() {
-		  	return candidateService.getAllInfectedAreas();
-	  }
-	 
-    
-    @PostMapping(value = "/infectedAreasFile", produces = { "application/json" })
-    public boolean postInfectedAreasFile(@RequestParam("files") MultipartFile[] files) throws ParseException {
-        return candidateService.postInfectedAreasFile(files);
-    }
-    
-	/*
-	 * @PostMapping(value = "/infectedAreas", produces = { "application/json" })
-	 * public boolean postInfectedAreas(@Valid @RequestBody ArrayList<Location>
-	 * locations) { return Arrays.asList(files) .stream() .map(file ->
-	 * uploadFile(file)) .collect(Collectors.toList()); }
-	 * 
-	 * @PostMapping(value = "/suscpectionDetails", produces = { "application/json"
-	 * }) public String postSuspectDetails(@Valid @RequestBody SuspectionReport
-	 * report) {
-	 * 
-	 * }
-	 */
+	@Autowired
+	private CandidateService candidateService;
+
+	@PostMapping
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public Candidate add(@RequestBody Candidate candidate) {
+		return candidateRepository.save(candidate);
+	}
+
+	@GetMapping(value = "/infected-areas", produces = { "application/json" })
+	public ResponseEntity<List<CovidLocation>> getInfectedAreas() {
+		return candidateService.getAllInfectedAreas();
+	}
+
+	@PostMapping(value = "/infected-areas-file", produces = { "application/json" })
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public boolean postInfectedAreasFile(@RequestParam("files") MultipartFile[] files) throws ParseException, FileParseException {
+		return candidateService.postInfectedAreasFile(files);
+	}
+
+	@PostMapping(value = "/infected-areas", produces = { "application/json" })
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public boolean postInfectedAreas(@Valid @RequestBody List<CovidLocation> locations) {
+		return candidateService.postInfectedAreas(locations);
+	}
+
+	@PostMapping(value = "/suspection-details", produces = { "application/json" })
+	@ResponseStatus(code = HttpStatus.CREATED)
+	public boolean postSuspectDetails(@Valid @RequestBody SuspectionDto report) throws Exception {
+		return candidateService.postSuspectionDetails(report);
+
+	}
 
 }

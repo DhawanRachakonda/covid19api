@@ -5,7 +5,7 @@
  *                 part without express written permission of Honeywell Inc. 
  *                 is prohibited.
  *
- * Name          :  User.java.java
+ * Name          :  UserRepository.java.java
  * 
  * Project Title :  demo 
  *  
@@ -26,12 +26,17 @@
  * On            : <Modified Date>
  * Description   : <Description of modification>
  ******************************************************************************/
-package com.example.demo.covid.dtos;
+package com.example.demo.covid.repositiories;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import com.example.demo.covid.dtos.AppUser;
 
 /**
  * @author H156833
  *
  */
-public class User {
+public interface UserRepository extends MongoRepository<AppUser, String> {
 
+	AppUser findByUsername(String username);
 }
