@@ -1,0 +1,305 @@
+swagger: '2.0'
+info:
+  description: Api Documentation
+  version: '1.0'
+  title: Api Documentation
+  termsOfService: 'urn:tos'
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0'
+host: 'localhost:8080'
+basePath: /
+tags:
+  - name: candidate-controller
+    description: Candidate Controller
+  - name: jwt-authentication-controller
+    description: Jwt Authentication Controller
+paths:
+  /api/v1/ic-tracker:
+    post:
+      tags:
+        - candidate-controller
+      summary: add
+      operationId: addUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - '*/*'
+      parameters:
+        - in: body
+          name: candidate
+          description: candidate
+          required: true
+          schema:
+            $ref: '#/definitions/Candidate'
+      responses:
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/Candidate'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  /api/v1/ic-tracker/infected-areas:
+    get:
+      tags:
+        - candidate-controller
+      summary: getInfectedAreas
+      operationId: getInfectedAreasUsingGET
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CovidLocation'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+    post:
+      tags:
+        - candidate-controller
+      summary: postInfectedAreas
+      operationId: postInfectedAreasUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: locations
+          description: locations
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/CovidLocation'
+      responses:
+        '201':
+          description: Created
+          schema:
+            type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  /api/v1/ic-tracker/infected-areas-file:
+    post:
+      tags:
+        - candidate-controller
+      summary: postInfectedAreasFile
+      operationId: postInfectedAreasFileUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: files
+          in: formData
+          description: files
+          required: true
+          type: array
+          items:
+            type: file
+          collectionFormat: multi
+      responses:
+        '201':
+          description: Created
+          schema:
+            type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  /api/v1/ic-tracker/suspection-details:
+    post:
+      tags:
+        - candidate-controller
+      summary: postSuspectDetails
+      operationId: postSuspectDetailsUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: report
+          description: report
+          required: true
+          schema:
+            $ref: '#/definitions/SuspectionDto'
+      responses:
+        '201':
+          description: Created
+          schema:
+            type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  /authenticate:
+    post:
+      tags:
+        - jwt-authentication-controller
+      summary: createAuthenticationToken
+      operationId: createAuthenticationTokenUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - '*/*'
+      parameters:
+        - in: body
+          name: authenticationRequest
+          description: authenticationRequest
+          required: true
+          schema:
+            $ref: '#/definitions/JwtRequest'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  /register:
+    post:
+      tags:
+        - jwt-authentication-controller
+      summary: saveUser
+      operationId: saveUserUsingPOST
+      consumes:
+        - application/json
+      produces:
+        - '*/*'
+      parameters:
+        - in: body
+          name: user
+          description: user
+          required: true
+          schema:
+            $ref: '#/definitions/AppUser'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+definitions:
+  Address:
+    type: object
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      line1:
+        type: string
+      line2:
+        type: string
+      line3:
+        type: string
+      state:
+        type: string
+      zipcode:
+        type: string
+    title: Address
+  AppUser:
+    type: object
+    properties:
+      id:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    title: AppUser
+  Candidate:
+    type: object
+    properties:
+      email:
+        type: string
+      exp:
+        type: number
+        format: double
+      id:
+        type: string
+      name:
+        type: string
+    title: Candidate
+  CovidLocation:
+    type: object
+    properties:
+      addressName:
+        type: string
+      dateField:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: string
+      longitude:
+        type: string
+      name:
+        type: string
+    title: CovidLocation
+  JwtRequest:
+    type: object
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    title: JwtRequest
+  SuspectionDto:
+    type: object
+    properties:
+      aadharNo:
+        type: string
+      address:
+        $ref: '#/definitions/Address'
+      dateOfSusInf:
+        type: string
+      email:
+        type: string
+      mobileNo:
+        type: string
+      name:
+        type: string
+      suspectedLocationId:
+        type: string
+    title: SuspectionDto
