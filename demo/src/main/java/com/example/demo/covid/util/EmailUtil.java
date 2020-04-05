@@ -22,7 +22,7 @@ import com.example.demo.covid.dtos.SuspectionReport;
 
 
 /**
- * @author H156833
+ * @author explorervarun
  *
  */
 @Component
