@@ -5,9 +5,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,22 +38,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 @Service
 public class CandidateService {
-	
+
 	@Autowired
 	ApiUtility apiUtil;
 
 	@Autowired
 	private InfectedAreasRepository infectedAreasRep;
-	
+
 	@Autowired
 	private SuspectionReportRepository suspectionReport;
-	
-	private static final Logger LOG = LoggerFactory.getLogger(CandidateService.class);	
-	
-	public boolean postInfectedAreasFile(MultipartFile[] files) throws ParseException, FileParseException {
 
-		List<CovidLocation> updated ;
-		ArrayList<GoogleLocation> monthlyData = new ArrayList<GoogleLocation>();
+	private static final Logger LOG = LoggerFactory.getLogger(CandidateService.class);
+
+	public boolean postInfectedAreasFile(MultipartFile[] files, String infectedDate)
+			throws ParseException, FileParseException {
+
+		List<CovidLocation> updated;
 		ArrayList<CovidLocation> covidLocations = new ArrayList<CovidLocation>();
 		ObjectMapper mapper = new ObjectMapper();
 		for (MultipartFile file : files) {
@@ -59,68 +61,93 @@ public class CandidateService {
 				byte[] bytes = file.getBytes();
 				String completeData = new String(bytes);
 				GoogleLocation location = mapper.readValue(completeData.getBytes(), GoogleLocation.class);
-				
-				
-				for(TimelineObject timeLine :location.getTimelineObjects()) {
+
+				for (TimelineObject timeLine : location.getTimelineObjects()) {
 					CovidLocation covidLoc = new CovidLocation();
-					if(timeLine.getPlaceVisit() != null && timeLine.getPlaceVisit().getLocation() != null 
-							&& timeLine.getPlaceVisit().getDuration() != null) {
-					if(!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getLatitudeE7())){
-						String latitude = timeLine.getPlaceVisit().getLocation().getLatitudeE7().toString();
-						covidLoc.setLatitude(latitude.substring(0, 2) + "." + latitude.substring(2));
-					};
 					
-					if(!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getLongitudeE7())){
-						String longitude = timeLine.getPlaceVisit().getLocation().getLongitudeE7().toString();
-						covidLoc.setLongitude(longitude.substring(0, 2) + "." + longitude.substring(2));
-					};
-					
-					if(!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getAddress())){
-						covidLoc.setAddressName(timeLine.getPlaceVisit().getLocation().getAddress());
-					} else {
-						covidLoc.setAddressName("Unrecognized location");
-					};
-					
-					if(!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getName())){
-						covidLoc.setName(timeLine.getPlaceVisit().getLocation().getName());
-					} else {
-						covidLoc.setName("Unrecognized location");
-					};
-					
-					if(!StringUtils.isEmpty(timeLine.getPlaceVisit().getDuration().getStartTimestampMs())) {
-						Calendar calendar = Calendar.getInstance();
-						SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-						long millis = Long.parseLong(timeLine.getPlaceVisit().getDuration().getStartTimestampMs());
-				    	calendar.setTimeInMillis(millis);
-				    	covidLoc.setDateField(sdf.format(calendar.getTime()));
-				    	
+					if (timeLine.getPlaceVisit() != null && timeLine.getPlaceVisit().getLocation() != null
+							&& timeLine.getPlaceVisit().getDuration() != null 
+							&& timeLine.getPlaceVisit().getDuration().getStartTimestampMs() !=null) {
+						
+						if (!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getLatitudeE7())) {
+							String latitude = timeLine.getPlaceVisit().getLocation().getLatitudeE7().toString();
+							covidLoc.setLatitude(latitude.substring(0, 2) + "." + latitude.substring(2));
+						}
+
+						if (!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getLongitudeE7())) {
+							String longitude = timeLine.getPlaceVisit().getLocation().getLongitudeE7().toString();
+							covidLoc.setLongitude(longitude.substring(0, 2) + "." + longitude.substring(2));
+						}
+
+						if (!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getAddress())) {
+							covidLoc.setAddressName(timeLine.getPlaceVisit().getLocation().getAddress());
+						} else {
+							covidLoc.setAddressName("Unrecognized location");
+						}
+						
+
+						if (!StringUtils.isEmpty(timeLine.getPlaceVisit().getLocation().getName())) {
+							covidLoc.setName(timeLine.getPlaceVisit().getLocation().getName());
+						} else {
+							covidLoc.setName("Unrecognized location");
+						}
+						
+
+						if (!StringUtils.isEmpty(timeLine.getPlaceVisit().getDuration().getStartTimestampMs())) {
+							Calendar calendar = Calendar.getInstance();
+							SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+							long millis = Long.parseLong(timeLine.getPlaceVisit().getDuration().getStartTimestampMs());
+							calendar.setTimeInMillis(millis);
+							covidLoc.setDateField(sdf.format(calendar.getTime()));
+						}
+						
+						covidLoc.setId(UUID.randomUUID().toString());
+
+						covidLocations.add(covidLoc);
 					}
-					}
-					covidLoc.setId(UUID.randomUUID().toString());
-					covidLocations.add(covidLoc);
 					
+
 				}
-				monthlyData.add(location);
-				updated = infectedAreasRep.saveAll(covidLocations);
+
 			} catch (IOException e) {
-				throw new FileParseException(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+				throw new FileParseException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-			return true;
+		// filter the data to 3 weeks
+		ArrayList<CovidLocation> filteredList = new ArrayList<CovidLocation>();
+		for (CovidLocation cov : covidLocations) {
+			SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+			Date infectedD = sdf1.parse(infectedDate);
+			
+			long diffInMillies = infectedD.getTime() - sdf1.parse(cov.getDateField()).getTime();
+			if(diffInMillies > 0) {
+		    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+			if (diff < 22) {
+				List<CovidLocation> existList =infectedAreasRep.findByLatitudeAndLongitudeAndDateField(cov.getLatitude(), cov.getLongitude(), cov.getDateField());
+				if(existList.size() == 0) {
+				filteredList.add(cov);
+				}
+			}
+			}
+		}
+		if(filteredList.size()>0) {
+		updated = infectedAreasRep.saveAll(filteredList);
+		}
+		return true;
 	}
-	
+
 	public boolean postInfectedAreas(List<CovidLocation> locations) {
-		List<CovidLocation> updated =infectedAreasRep.saveAll(locations);
-		
-		if(updated.size() == locations.size()) {
+		List<CovidLocation> updated = infectedAreasRep.saveAll(locations);
+
+		if (updated.size() == locations.size()) {
 			return true;
-		}else {
+		} else {
 			return false;
 		}
 	}
 
 	public ResponseEntity<List<CovidLocation>> getAllInfectedAreas() {
-		return new ResponseEntity<List<CovidLocation>>(infectedAreasRep.findAll(),HttpStatus.OK);
+		return new ResponseEntity<List<CovidLocation>>(infectedAreasRep.findAll(), HttpStatus.OK);
 	}
 
 	public boolean postSuspectionDetails(SuspectionDto report) throws Exception {
@@ -138,16 +165,16 @@ public class CandidateService {
 		susRep.setState(report.getAddress().getState());
 		susRep.setSuspectedLocationId(report.getSuspectedLocationId());
 		susRep.setPincode(report.getAddress().getZipcode());
-		
+
 		SuspectionReport uploaded = suspectionReport.save(susRep);
 		Optional<CovidLocation> covLoc = infectedAreasRep.findById(susRep.getSuspectedLocationId());
-		if(covLoc.isPresent()) {
+		if (covLoc.isPresent()) {
 			CovidLocation covLocation = covLoc.get();
-			EmailUtil.sendEmail(susRep,covLocation.getName());
+			EmailUtil.sendEmail(susRep, covLocation.getName());
 		}
-		if(uploaded.getName() == report.getName()) {
+		if (uploaded.getName() == report.getName()) {
 			return true;
-		}else {
+		} else {
 			return false;
 		}
 	}

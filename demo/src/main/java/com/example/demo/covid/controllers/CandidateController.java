@@ -47,8 +47,8 @@ public class CandidateController {
 
 	@PostMapping(value = "/infected-areas-file", produces = { "application/json" })
 	@ResponseStatus(code = HttpStatus.CREATED)
-	public boolean postInfectedAreasFile(@RequestParam("files") MultipartFile[] files) throws ParseException, FileParseException {
-		return candidateService.postInfectedAreasFile(files);
+	public boolean postInfectedAreasFile(@RequestParam("files") MultipartFile[] files,@RequestParam("infectedDate") String infectedDate) throws ParseException, FileParseException {
+		return candidateService.postInfectedAreasFile(files,infectedDate);
 	}
 
 	@PostMapping(value = "/infected-areas", produces = { "application/json" })
