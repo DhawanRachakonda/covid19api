@@ -123,7 +123,10 @@ public class CandidateService {
 			if(diffInMillies > 0) {
 		    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 			if (diff < 22) {
+				List<CovidLocation> existList =infectedAreasRep.findByLatitudeAndLongitudeAndDateField(cov.getLatitude(), cov.getLongitude(), cov.getDateField());
+				if(existList.size() == 0) {
 				filteredList.add(cov);
+				}
 			}
 			}
 		}
