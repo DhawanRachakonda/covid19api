@@ -22,7 +22,6 @@ import com.example.demo.covid.util.JwtTokenUtil;
 
 
 @RestController
-@CrossOrigin
 public class JwtAuthenticationController {
 
 	@Autowired
