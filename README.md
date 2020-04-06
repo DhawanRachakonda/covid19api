@@ -31,7 +31,7 @@
 
 <code>pwd <base_dir>/nginx</code>
 <code>sudo docker build -t covid19-nginx .</code>
-<code>sudo docker run --net slb-network --init --rm -d -p 80:80 covid19-nginx</code>
+<code>sudo docker run --net slb-network --init --rm  -p 80:80 -p 443:443 -v /etc/nginx/ssl:/etc/nginx/ssl covid19-nginx</code>
 
 ## List all process
 
