@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.covid.dtos.AppUser;
 import com.example.demo.covid.dtos.JwtRequest;
 import com.example.demo.covid.dtos.JwtResponse;
+import com.example.demo.covid.dtos.RegisterDto;
 import com.example.demo.covid.services.JwtUserDetailsService;
 import com.example.demo.covid.util.JwtTokenUtil;
 
@@ -48,7 +49,10 @@ public class JwtAuthenticationController {
 	
 	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	public ResponseEntity<?> saveUser(@RequestBody AppUser user) throws Exception {
-		return ResponseEntity.ok(userDetailsService.save(user));
+		AppUser createdUser =userDetailsService.save(user);
+		RegisterDto resp = new RegisterDto();
+		resp.setUsername(createdUser.getUsername());
+		return ResponseEntity.ok(resp);
 	}
 
 	private void authenticate(String username, String password) throws Exception {
